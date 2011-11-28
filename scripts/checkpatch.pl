@@ -1374,6 +1374,7 @@ sub process {
 	my %suppress_whiletrailers;
 	my %suppress_export;
 	my $suppress_statement = 0;
+	my $suppress_gitshow = 0;
 
 	# Pre-scan the patch sanitizing the lines.
 	# Pre-scan the patch looking for any __setup documentation.
@@ -1387,6 +1388,9 @@ sub process {
 		$linenr++;
 		$line = $rawline;
 
+		if ($linenr == 1 && $rawline =~/^commit [a-z0-9]{40}/) {
+			$suppress_gitshow = 1;
+		}
 		if ($rawline=~/^\+\+\+\s+(\S+)/) {
 			$setup_docs = 0;
 			if ($1 =~ m@Documentation/kernel-parameters.txt$@) {
@@ -1572,7 +1576,8 @@ sub process {
 			my $email = $4;
 			my $ucfirst_sign_off = ucfirst(lc($sign_off));
 
-			if (defined $space_before && $space_before ne "") {
+			if (defined $space_before && $space_before ne "" &&
+			    ($suppress_gitshow == 0 || $space_before ne "    ")) {
 				WARN("BAD_SIGN_OFF",
 				     "Do not use whitespace before $ucfirst_sign_off\n" . $herecurr);
 			}
